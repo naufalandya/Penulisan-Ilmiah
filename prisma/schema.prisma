@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model users {
+  id                                 String                  @id
+  name                               String?
+  username                           String?                 @unique @db.VarChar(150)
+  email                              String                  @unique @db.VarChar(150)
+  password                           String                  @db.VarChar(255)
+  meta_profile_link                  String?
+  isVerified                         Boolean                 @default(false)
+  country                            String?
+  isPublic                           Boolean                 @default(false)
+  role                               ROLE                    @default(USER)
+  bio                                String?
+  tags                               String[]
+  created_at                         DateTime                @default(now())
+  updated_at                         DateTime                @default(now())
+  posts                              posts[]
+  follows_follows_followerIdTousers  follows[]               @relation("follows_followerIdTousers")
+  follows_follows_followingIdTousers follows[]               @relation("follows_followingIdTousers")
+  reminders                          reminders[]
+  diary                              diary[]
+  quote                              random_quotes[]
+  likes                              likes[]
+}
+//posts
+
+model posts {
+  id                Int               @id @default(autoincrement())
+  text              String
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @default(now())
+  tags              String[]
+  category          CATEGORY
+  user_id           String
+  users             users             @relation(fields: [user_id], references: [id])
+  image_link_post   image_link_post[]
+  likes             likes[]
+}
+
+model image_link_post {
+  id         Int     @id @default(autoincrement())
+  image_link String[]
+  post_id    Int
+
+  posts      posts   @relation(fields: [post_id], references: [id])
+}
+
+model likes {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  post_id    Int
+  created_at DateTime @default(now())
+
+  users      users    @relation(fields: [user_id], references: [id])
+  posts      posts    @relation(fields: [post_id], references: [id])
+
+  @@unique([user_id, post_id])
+}
+
+model follows {
+  id                               String   @id
+  followerId                       String
+  followingId                      String
+  createdAt                        DateTime @default(now())
+  users_follows_followerIdTousers  users    @relation("follows_followerIdTousers", fields: [followerId], references: [id])
+  users_follows_followingIdTousers users    @relation("follows_followingIdTousers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+//activity
+
+model reminders {
+  id            Int      @id @default(autoincrement())
+  title         String
+  content       String
+  is_finished   Boolean  @default(false)
+  is_public     Boolean  @default(true)
+  deadline_time DateTime
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+  user_id       String
+  users         users    @relation(fields: [user_id], references: [id])
+}
+
+model diary {
+  id Int @id @default(autoincrement())
+  title   String
+  content String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+  user_id       String
+  users         users    @relation(fields: [user_id], references: [id])
+}
+
+model random_quotes {
+  id            Int @id @default(autoincrement())
+  title         String
+  content       String
+  user_id       String
+  users         users    @relation(fields: [user_id], references: [id])
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+}
+
+
+enum ROLE {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum CATEGORY {
+  LEARN
+  SPEECH
+}
