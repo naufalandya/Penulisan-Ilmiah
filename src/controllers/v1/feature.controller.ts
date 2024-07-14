@@ -1,23 +1,62 @@
 import type { Request, Response } from 'express';
 import { user } from '@/services/v1/index.service';
 import type { UserRequest } from '@/middlewares/auth.middleware';
+import path from 'path'
+import { imagekit } from '@/config/imagekit.config';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient()
+
+export interface CustomRequest extends Request {
+    file?: Express.Multer.File;
+}
 
 export const createPostController = async (req: Request, res: Response) => {
-    const { text, tags, image_link } = req.body;
-    const id = (req as UserRequest).user?.id;
+    const { text, tags, category } = req.body;
+    const id = (req as any).user?.id;
+    const image_link = req.file;
 
-    if (!id || !text || !tags) {
-        return res.status(400).json({ error: 'id, text, and tags are required' });
+    console.log(image_link)
+  
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid token' });
+    }
+  
+    if (!text || !tags || !category) {
+      return res.status(400).json({ error: 'Text, category, and tags are required' });
+    }
+  
+    if (category !== 'LEARN' && category !== 'SPEECH') {
+      return res.status(400).json({ error: 'Category must be "LEARN" or "SPEECH"' });
+    }
+  
+    let fileUrl = 'aa';
+  
+    if (image_link) {
+      try {
+        const fileBase64 = image_link.buffer.toString("base64");
+        const response = await imagekit.upload({
+          fileName: Date.now() + path.extname(image_link.originalname),
+          file: fileBase64,
+        });
+        console.log('wow', response)
+  
+        fileUrl = response.url;
+      } catch (error) {
+        console.log('Error uploading file to ImageKit:', error);
+        return res.status(500).json({ error: 'An error occurred while uploading the file' });
+      }
     }
 
+    console.log(fileUrl)
+  
     try {
-        const newPost = await user.createPost(id, text, tags, image_link);
-        return res.status(201).json(newPost);
+      const newPost = await user.createPost(id, text, tags, fileUrl, category);
+      return res.status(201).json(newPost);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while creating the post' });
+      console.log('Error creating post:', error);
+      return res.status(500).json({ error: 'An error occurred while creating the post' });
     }
-};
+  };
 
 export const getPostController = async (req: Request, res: Response) => {
     const id = (req as UserRequest).user?.id;
@@ -51,7 +90,102 @@ export const feedByFollowingController = async (req: Request, res: Response) => 
     }
 };
 
+export const getRandomSpeechPosts = async (req: Request, res: Response) => {
+    const { page = 1 } = req.query;
+    const limit = 12;
+  
+    try {
+      const totalCount = await prisma.posts.count({
+        where: { category: 'SPEECH' },
+      });
+  
+      const offset = (Number(page) - 1) * limit;
+  
+      // Fetch posts with include relations
+      const posts = await prisma.posts.findMany({
+        where: { category: 'SPEECH' },
+        include: {
+          image_link_post: true,
+          _count: {
+            select: {
+              likes: true,
+            },
+          },
+        },
+      });
+  
+      // Shuffle posts array for random order
+      shuffleArray(posts);
+  
+      // Paginate and limit results
+      const paginatedPosts = posts.slice(offset, offset + limit);
+  
+      const totalPages = Math.ceil(totalCount / limit);
+  
+      res.status(200).json({
+        posts: paginatedPosts,
+        totalCount,
+        page: Number(page),
+        totalPages,
+        itemsPerPage: limit,
+      });
+    } catch (error) {
+      console.error('Error fetching speech posts:', error);
+      res.status(500).json({ error: 'Failed to fetch speech posts. Please try again later.' });
+    }
+  };
+  
+  function shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
 
+  export const getRandomLearnPosts = async (req: Request, res: Response) => {
+    const { page = 1 } = req.query;
+    const limit = 12;
+  
+    try {
+      const totalCount = await prisma.posts.count({
+        where: { category: 'SPEECH' },
+      });
+  
+      const offset = (Number(page) - 1) * limit;
+  
+      // Fetch posts with include relations
+      const posts = await prisma.posts.findMany({
+        where: { category: 'SPEECH' },
+        include: {
+          image_link_post: true,
+          _count: {
+            select: {
+              likes: true,
+            },
+          },
+        },
+      });
+  
+      // Shuffle posts array for random order
+      shuffleArray(posts);
+  
+      // Paginate and limit results
+      const paginatedPosts = posts.slice(offset, offset + limit);
+  
+      const totalPages = Math.ceil(totalCount / limit);
+  
+      res.status(200).json({
+        posts: paginatedPosts,
+        totalCount,
+        page: Number(page),
+        totalPages,
+        itemsPerPage: limit,
+      });
+    } catch (error) {
+      console.error('Error fetching speech posts:', error);
+      res.status(500).json({ error: 'Failed to fetch speech posts. Please try again later.' });
+    }
+  };
 export const feedByTagsController = async (req: Request, res: Response) => {
     const id = (req as UserRequest).user?.id;
 

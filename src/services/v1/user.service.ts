@@ -1,34 +1,41 @@
-import { prisma } from "@/config/db.config";
+import { prisma} from "@/config/db.config";
+import { CATEGORY } from "@prisma/client";
 
-export const createPost = async function(id : string, text : string, tags: string[], image_link : string[] | undefined) {
+export const createPost = async function (
+    id: string,
+    text: string,
+    tags: string, 
+    image_link: string | undefined,
+    category: CATEGORY
+  ) {
     try {
-
-        const createdPost = await prisma.posts.create({
-            data : {
-                user_id : id,
-                text : text,
-                tags : tags,
-                category : 'SPEECH'
-            }
-        })
-
-        let created_image_link = {}
-        if(image_link) {
-            created_image_link = await prisma.image_link_post.create({
-                data : {
-                    post_id : createdPost.id,
-                    image_link : image_link
-                }
-            })
+      const createdPost = await prisma.posts.create({
+        data: {
+          user_id: id,
+          text: text,
+          tags: {
+            set: JSON.parse(tags) 
+          },
+          category: category
         }
-
-
-        return { ...createdPost, ...created_image_link}
-
+      });
+  
+      let createdImageLink = null;
+      if (image_link) {
+        createdImageLink = await prisma.image_link_post.create({
+          data: {
+            post_id: createdPost.id,
+            image_link: image_link
+          }
+        });
+      }
+  
+      return { ...createdPost, createdImageLink };
+  
     } catch (err) {
-        throw err
+      throw err;
     }
-}
+  };
 
 export const getPost = async function(id: string) {
     try {

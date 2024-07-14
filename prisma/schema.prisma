@@ -8,51 +8,48 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 model users {
-  id                                 String                  @id
+  id                                 String          @id
   name                               String?
-  username                           String?                 @unique @db.VarChar(150)
-  email                              String                  @unique @db.VarChar(150)
-  password                           String                  @db.VarChar(255)
+  username                           String?         @unique @db.VarChar(150)
+  email                              String          @unique @db.VarChar(150)
+  password                           String          @db.VarChar(255)
   meta_profile_link                  String?
-  isVerified                         Boolean                 @default(false)
   country                            String?
-  isPublic                           Boolean                 @default(false)
-  role                               ROLE                    @default(USER)
+  isPublic                           Boolean         @default(false)
+  role                               ROLE            @default(USER)
   bio                                String?
   tags                               String[]
-  created_at                         DateTime                @default(now())
-  updated_at                         DateTime                @default(now())
-  posts                              posts[]
-  follows_follows_followerIdTousers  follows[]               @relation("follows_followerIdTousers")
-  follows_follows_followingIdTousers follows[]               @relation("follows_followingIdTousers")
-  reminders                          reminders[]
+  created_at                         DateTime        @default(now())
+  updated_at                         DateTime        @default(now())
+  isVerified                         Boolean         @default(false)
   diary                              diary[]
-  quote                              random_quotes[]
+  follows_follows_followerIdTousers  follows[]       @relation("follows_followerIdTousers")
+  follows_follows_followingIdTousers follows[]       @relation("follows_followingIdTousers")
   likes                              likes[]
+  posts                              posts[]
+  quote                              random_quotes[]
+  reminders                          reminders[]
 }
-//posts
 
 model posts {
-  id                Int               @id @default(autoincrement())
-  text              String
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @default(now())
-  tags              String[]
-  category          CATEGORY
-  user_id           String
-  users             users             @relation(fields: [user_id], references: [id])
-  image_link_post   image_link_post[]
-  likes             likes[]
+  id              Int               @id @default(autoincrement())
+  text            String
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @default(now())
+  user_id         String
+  tags            String[]
+  category        CATEGORY
+  image_link_post image_link_post[]
+  likes           likes[]
+  users           users             @relation(fields: [user_id], references: [id])
 }
 
 model image_link_post {
-  id         Int     @id @default(autoincrement())
-  image_link String[]
+  id         Int      @id @default(autoincrement())
   post_id    Int
-
-  posts      posts   @relation(fields: [post_id], references: [id])
+  image_link String
+  posts      posts    @relation(fields: [post_id], references: [id])
 }
 
 model likes {
@@ -60,9 +57,8 @@ model likes {
   user_id    String
   post_id    Int
   created_at DateTime @default(now())
-
-  users      users    @relation(fields: [user_id], references: [id])
   posts      posts    @relation(fields: [post_id], references: [id])
+  users      users    @relation(fields: [user_id], references: [id])
 
   @@unique([user_id, post_id])
 }
@@ -78,11 +74,8 @@ model follows {
   @@unique([followerId, followingId])
 }
 
-//activity
-
 model reminders {
   id            Int      @id @default(autoincrement())
-  title         String
   content       String
   is_finished   Boolean  @default(false)
   is_public     Boolean  @default(true)
@@ -90,29 +83,29 @@ model reminders {
   created_at    DateTime @default(now())
   updated_at    DateTime @default(now())
   user_id       String
+  title         String
   users         users    @relation(fields: [user_id], references: [id])
 }
 
 model diary {
-  id Int @id @default(autoincrement())
-  title   String
-  content String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
-  user_id       String
-  users         users    @relation(fields: [user_id], references: [id])
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  user_id    String
+  users      users    @relation(fields: [user_id], references: [id])
 }
 
 model random_quotes {
-  id            Int @id @default(autoincrement())
-  title         String
-  content       String
-  user_id       String
-  users         users    @relation(fields: [user_id], references: [id])
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  user_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id])
 }
-
 
 enum ROLE {
   USER
