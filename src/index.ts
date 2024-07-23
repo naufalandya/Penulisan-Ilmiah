@@ -11,8 +11,9 @@ import cors from 'cors';
 
 const corsOptions = {
   origin: [
+  
     "http://localhost:5173",
-    "http://localhost:5174",
+    "https://bw2nj1xt-5173.asse.devtunnels.ms",
   ],
   optionsSuccessStatus: 200,
   credentials: true

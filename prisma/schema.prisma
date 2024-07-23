@@ -28,9 +28,16 @@ model users {
   follows_follows_followingIdTousers follows[]       @relation("follows_followingIdTousers")
   likes                              likes[]
   posts                              posts[]
-  quote                              random_quotes[]
+  // quote                              random_quotes[]
   reminders                          reminders[]
 }
+
+enum ROLE {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
 
 model posts {
   id              Int               @id @default(autoincrement())
@@ -45,11 +52,18 @@ model posts {
   users           users             @relation(fields: [user_id], references: [id])
 }
 
+
+enum CATEGORY {
+  LEARN
+  SPEECH
+}
+
+
 model image_link_post {
-  id         Int      @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   post_id    Int
   image_link String
-  posts      posts    @relation(fields: [post_id], references: [id])
+  posts      posts  @relation(fields: [post_id], references: [id])
 }
 
 model likes {
@@ -97,23 +111,13 @@ model diary {
   users      users    @relation(fields: [user_id], references: [id])
 }
 
-model random_quotes {
-  id         Int      @id @default(autoincrement())
-  title      String
-  content    String
-  user_id    String
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  users      users    @relation(fields: [user_id], references: [id])
-}
+// model random_quotes {
+//   id         Int      @id @default(autoincrement())
+//   title      String
+//   content    String
+//   user_id    String
+//   created_at DateTime @default(now())
+//   updated_at DateTime @default(now())
+//   users      users    @relation(fields: [user_id], references: [id])
+// }
 
-enum ROLE {
-  USER
-  ADMIN
-  SUPERADMIN
-}
-
-enum CATEGORY {
-  LEARN
-  SPEECH
-}

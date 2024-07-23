@@ -101,7 +101,6 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
   
       const offset = (Number(page) - 1) * limit;
   
-      // Fetch posts with include relations
       const posts = await prisma.posts.findMany({
         where: { category: 'SPEECH' },
         include: {
@@ -111,13 +110,17 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
               likes: true,
             },
           },
+          users : {
+            select : {
+              username : true
+            }
+          },
         },
-      });
+        orderBy: {
+          created_at: 'desc'
+      }
+      })
   
-      // Shuffle posts array for random order
-      shuffleArray(posts);
-  
-      // Paginate and limit results
       const paginatedPosts = posts.slice(offset, offset + limit);
   
       const totalPages = Math.ceil(totalCount / limit);
@@ -135,12 +138,6 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
     }
   };
   
-  function shuffleArray(array: any[]) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-  }
 
   export const getRandomLearnPosts = async (req: Request, res: Response) => {
     const { page = 1 } = req.query;
@@ -148,14 +145,14 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
   
     try {
       const totalCount = await prisma.posts.count({
-        where: { category: 'SPEECH' },
+        where: { category: 'LEARN' },
       });
   
       const offset = (Number(page) - 1) * limit;
   
       // Fetch posts with include relations
       const posts = await prisma.posts.findMany({
-        where: { category: 'SPEECH' },
+        where: { category: 'LEARN' },
         include: {
           image_link_post: true,
           _count: {
@@ -163,11 +160,18 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
               likes: true,
             },
           },
+          users : {
+            select : {
+              username : true
+            }
+          }
         },
+
+        orderBy: {
+          created_at: 'desc'
+        }
+        
       });
-  
-      // Shuffle posts array for random order
-      shuffleArray(posts);
   
       // Paginate and limit results
       const paginatedPosts = posts.slice(offset, offset + limit);
