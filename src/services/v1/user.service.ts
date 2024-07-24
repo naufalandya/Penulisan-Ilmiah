@@ -45,11 +45,6 @@ export const getPost = async function(id: string) {
             },
             include: {
                 image_link_post: true,
-                _count: {
-                    select: {
-                        likes: true,
-                    }
-                }
             },
             orderBy: {
                 created_at: 'desc'
@@ -58,7 +53,6 @@ export const getPost = async function(id: string) {
 
         return posts.map(post => ({
             ...post,
-            totalLikes: post._count.likes,
         }));
     } catch (err) {
         throw err;
@@ -69,15 +63,6 @@ export const getPost = async function(id: string) {
 export const feedByFollowing = async function(userId: string) {
     try {
         const feed = await prisma.posts.findMany({
-            where: {
-                users: {
-                    follows_follows_followerIdTousers: {
-                        some: {
-                            followingId: userId
-                        }
-                    }
-                }
-            },
             orderBy: {
                 created_at: 'desc'
             },
@@ -88,11 +73,6 @@ export const feedByFollowing = async function(userId: string) {
                 updated_at: true,
                 tags: true,
                 user_id: true,
-                _count: {
-                    select: {
-                        likes: true,
-                    }
-                },
                 users: {
                     select: {
                         id: true,
@@ -111,7 +91,6 @@ export const feedByFollowing = async function(userId: string) {
 
         return feed.map(post => ({
             ...post,
-            totalLikes: post._count.likes,
         }));
     } catch (err) {
         throw err;
@@ -148,11 +127,6 @@ export const feedByTags = async function(userId: string) {
                 updated_at: true,
                 tags: true,
                 user_id: true,
-                _count: {
-                    select: {
-                        likes: true,
-                    }
-                },
                 users: {
                     select: {
                         id: true,
@@ -171,7 +145,6 @@ export const feedByTags = async function(userId: string) {
 
         return feed.map(post => ({
             ...post,
-            totalLikes: post._count.likes,
         }));
     } catch (err) {
         throw err;
@@ -197,24 +170,6 @@ export const getUserProfile = async function(userId: string) {
                 tags: true,
                 created_at: true,
                 updated_at: true,
-                follows_follows_followerIdTousers: {
-                    select: {
-                        users_follows_followingIdTousers: {
-                            select: {
-                                username: true,
-                            }
-                        }
-                    }
-                },
-                follows_follows_followingIdTousers: {
-                    select: {
-                        users_follows_followerIdTousers: {
-                            select: {
-                                username: true,
-                            }
-                        }
-                    }
-                }
             }
         });
 
@@ -222,8 +177,6 @@ export const getUserProfile = async function(userId: string) {
 
         return {
             ...userProfile,
-            followers: userProfile?.follows_follows_followingIdTousers.map(follow => follow.users_follows_followerIdTousers),
-            following: userProfile?.follows_follows_followerIdTousers.map(follow => follow.users_follows_followingIdTousers),
         };
     } catch (err) {
         throw err;
@@ -257,33 +210,6 @@ export const editUserTags = async function(userId: string, tags: string[]) {
             }
         });
         return updatedUser;
-    } catch (err) {
-        throw err;
-    }
-}
-
-export const likePost = async function(userId: string, postId: number) {
-    try {
-        const like = await prisma.likes.create({
-            data: {
-                user_id: userId,
-                post_id: postId
-            }
-        });
-        return like;
-    } catch (err) {
-        throw err;
-    }
-}
-
-export const unlikePost = async function(userId: string, postId: number) {
-    try {
-        await prisma.likes.deleteMany({
-            where: {
-                user_id: userId,
-                post_id: postId
-            }
-        });
     } catch (err) {
         throw err;
     }
@@ -338,20 +264,7 @@ export const createDiary = async function(userId: string, title: string, content
 //     }
 // }
 
-export const createRandomQuote = async function(userId: string, title: string, content: string) {
-    try {
-        const quote = await prisma.random_quotes.create({
-            data: {
-                title,
-                content,
-                user_id: userId
-            }
-        });
-        return quote;
-    } catch (err) {
-        throw err;
-    }
-}
+
 
 export const getReminders = async function(userId: string) {
     try {
@@ -402,21 +315,6 @@ export const getDiary = async function(userId: string) {
 //     }
 // }
 
-export const getRandomQuotes = async function(userId: string) {
-    try {
-        const quotes = await prisma.random_quotes.findMany({
-            where: {
-                user_id: userId
-            },
-            orderBy: {
-                created_at: 'desc'
-            }
-        });
-        return quotes;
-    } catch (err) {
-        throw err;
-    }
-}
 
 
 

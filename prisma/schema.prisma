@@ -24,9 +24,7 @@ model users {
   updated_at                         DateTime        @default(now())
   isVerified                         Boolean         @default(false)
   diary                              diary[]
-  follows_follows_followerIdTousers  follows[]       @relation("follows_followerIdTousers")
-  follows_follows_followingIdTousers follows[]       @relation("follows_followingIdTousers")
-  likes                              likes[]
+  // likes                              likes[]
   posts                              posts[]
   // quote                              random_quotes[]
   reminders                          reminders[]
@@ -48,7 +46,7 @@ model posts {
   tags            String[]
   category        CATEGORY
   image_link_post image_link_post[]
-  likes           likes[]
+  // likes           likes[]
   users           users             @relation(fields: [user_id], references: [id])
 }
 
@@ -66,27 +64,6 @@ model image_link_post {
   posts      posts  @relation(fields: [post_id], references: [id])
 }
 
-model likes {
-  id         Int      @id @default(autoincrement())
-  user_id    String
-  post_id    Int
-  created_at DateTime @default(now())
-  posts      posts    @relation(fields: [post_id], references: [id])
-  users      users    @relation(fields: [user_id], references: [id])
-
-  @@unique([user_id, post_id])
-}
-
-model follows {
-  id                               String   @id
-  followerId                       String
-  followingId                      String
-  createdAt                        DateTime @default(now())
-  users_follows_followerIdTousers  users    @relation("follows_followerIdTousers", fields: [followerId], references: [id])
-  users_follows_followingIdTousers users    @relation("follows_followingIdTousers", fields: [followingId], references: [id])
-
-  @@unique([followerId, followingId])
-}
 
 model reminders {
   id            Int      @id @default(autoincrement())
@@ -121,3 +98,26 @@ model diary {
 //   users      users    @relation(fields: [user_id], references: [id])
 // }
 
+
+// model follows {
+//   id                               String   @id
+//   followerId                       String
+//   followingId                      String
+//   createdAt                        DateTime @default(now())
+//   users_follows_followerIdTousers  users    @relation("follows_followerIdTousers", fields: [followerId], references: [id])
+//   users_follows_followingIdTousers users    @relation("follows_followingIdTousers", fields: [followingId], references: [id])
+
+//   @@unique([followerId, followingId])
+// }
+
+
+// model likes {
+//   id         Int      @id @default(autoincrement())
+//   user_id    String
+//   post_id    Int
+//   created_at DateTime @default(now())
+//   posts      posts    @relation(fields: [post_id], references: [id])
+//   users      users    @relation(fields: [user_id], references: [id])
+
+//   @@unique([user_id, post_id])
+// }

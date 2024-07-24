@@ -27,8 +27,6 @@ export const verifytoken = async(req : Request, res : Response, next : NextFunct
 
         let token = authorization.split(' ')[1]
 
-        console.log(token)
-
         jwt.verify(token, String(Bun.env.SECRET_KEY), (err, decoded) => {
             if (err) {
                 console.log(err)

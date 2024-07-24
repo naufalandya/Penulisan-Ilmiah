@@ -74,69 +74,111 @@ export const getPostController = async (req: Request, res: Response) => {
     }
 };
 
-export const feedByFollowingController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
-
-    if (!id) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    try {
-        const feed = await user.feedByFollowing(id);
-        return res.status(200).json(feed);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while fetching feed' });
-    }
-};
-
 export const getRandomSpeechPosts = async (req: Request, res: Response) => {
-    const { page = 1 } = req.query;
-    const limit = 12;
-  
-    try {
-      const totalCount = await prisma.posts.count({
-        where: { category: 'SPEECH' },
-      });
-  
-      const offset = (Number(page) - 1) * limit;
-  
-      const posts = await prisma.posts.findMany({
-        where: { category: 'SPEECH' },
-        include: {
-          image_link_post: true,
-          _count: {
-            select: {
-              likes: true,
-            },
-          },
-          users : {
-            select : {
-              username : true
-            }
+  const { page = 1 } = req.query;
+  const limit = 12;
+
+  try {
+    const totalCount = await prisma.posts.count({
+      where: { category: 'SPEECH' },
+    });
+
+    const offset = (Number(page) - 1) * limit;
+    const userId = (req as UserRequest).user?.id;
+
+    const posts = await prisma.posts.findMany({
+      where: { category: 'SPEECH' },
+      include: {
+        image_link_post: true,
+
+        users: {
+          select: {
+            username: true,
           },
         },
-        orderBy: {
-          created_at: 'desc'
-      }
-      })
-  
-      const paginatedPosts = posts.slice(offset, offset + limit);
-  
-      const totalPages = Math.ceil(totalCount / limit);
-  
-      res.status(200).json({
-        posts: paginatedPosts,
-        totalCount,
-        page: Number(page),
-        totalPages,
-        itemsPerPage: limit,
-      });
-    } catch (error) {
-      console.error('Error fetching speech posts:', error);
-      res.status(500).json({ error: 'Failed to fetch speech posts. Please try again later.' });
-    }
-  };
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+      skip: offset,
+      take: limit,
+    });
+
+    const paginatedPosts = posts.map(post => ({
+      ...post,
+    }));
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      posts: paginatedPosts,
+      totalCount,
+      page: Number(page),
+      totalPages,
+      itemsPerPage: limit,
+    });
+  } catch (error) {
+    console.error('Error fetching speech posts:', error);
+    res.status(500).json({ error: 'Failed to fetch speech posts. Please try again later.' });
+  }
+};
+
+
+export const getRandomActivityReminder = async (req : Request, res : Response) => {
+  try {
+
+    let page = Number(req.query.page) || 1;
+    let limit = Number(req.query.limit) || 10;
+
+    const reminder = await prisma.reminders.findMany({
+      orderBy : {
+        created_at : 'desc'
+      },
+      include : {
+        users: {
+          select: {
+            username: true,
+          },
+        },      },
+      skip : (page -1) * limit,
+      take : limit,
+    })
+
+    return res.status(200).json(reminder)
+
+
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch activity reminder. Please try again later.' });
+  }
+}
+
+export const getRandomActivityDiary = async (req : Request, res : Response) => {
+  try {
+
+    let page = Number(req.query.page) || 1;
+    let limit = Number(req.query.limit) || 10;
+
+    const reminder = await prisma.diary.findMany({
+      orderBy : {
+        created_at : 'desc'
+      },
+      include : {
+        users: {
+          select: {
+            username: true,
+          },
+        },      },
+      skip : (page -1) * limit,
+      take : limit,
+    })
+
+    return res.status(200).json(reminder)
+
+
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch activity reminder. Please try again later.' });
+  }
+}
   
 
   export const getRandomLearnPosts = async (req: Request, res: Response) => {
@@ -155,11 +197,6 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
         where: { category: 'LEARN' },
         include: {
           image_link_post: true,
-          _count: {
-            select: {
-              likes: true,
-            },
-          },
           users : {
             select : {
               username : true
@@ -190,21 +227,7 @@ export const getRandomSpeechPosts = async (req: Request, res: Response) => {
       res.status(500).json({ error: 'Failed to fetch speech posts. Please try again later.' });
     }
   };
-export const feedByTagsController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
 
-    if (!id) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    try {
-        const feed = await user.feedByTags(id);
-        return res.status(200).json(feed);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while fetching feed' });
-    }
-};
 
 export const getUserProfileController = async (req: Request, res: Response) => {
     const id = (req as UserRequest).user?.id;
@@ -257,39 +280,7 @@ export const editUserTagsController = async (req: Request, res: Response) => {
     }
 };
 
-export const likePostController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
-    const { postId } = req.params;
 
-    if (!id || !postId) {
-        return res.status(400).json({ error: 'User ID and Post ID are required' });
-    }
-
-    try {
-        const like = await user.likePost(id, parseInt(postId));
-        return res.status(201).json(like);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while liking the post' });
-    }
-};
-
-export const unlikePostController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
-    const { postId } = req.params;
-
-    if (!id || !postId) {
-        return res.status(400).json({ error: 'User ID and Post ID are required' });
-    }
-
-    try {
-        await user.unlikePost(id, parseInt(postId));
-        return res.status(204).send();
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while unliking the post' });
-    }
-};
 
 
 export const createReminderController = async (req: Request, res: Response) => {
@@ -327,39 +318,6 @@ export const createDiaryController = async (req: Request, res: Response) => {
 };
 
 
-// export const createNoteController = async (req: Request, res: Response) => {
-//     const id = (req as UserRequest).user?.id;
-//     const { title, content } = req.body;
-
-//     if (!id) {
-//         return res.status(400).json({ error: 'User ID is required' });
-//     }
-
-//     try {
-//         const note = await user.createNote(id, title, content);
-//         return res.status(201).json(note);
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ error: 'An error occurred while creating the note' });
-//     }
-// };
-
-export const createRandomQuoteController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
-    const { title, content } = req.body;
-
-    if (!id) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    try {
-        const quote = await user.createRandomQuote(id, title, content);
-        return res.status(201).json(quote);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while creating the random quote' });
-    }
-};
 
 export const getRemindersController = async (req: Request, res: Response) => {
     const id = (req as UserRequest).user?.id;
@@ -393,34 +351,4 @@ export const getDiaryController = async (req: Request, res: Response) => {
     }
 };
 
-// export const getNotesController = async (req: Request, res: Response) => {
-//     const id = (req as UserRequest).user?.id;
 
-//     if (!id) {
-//         return res.status(400).json({ error: 'User ID is required' });
-//     }
-
-//     try {
-//         const notes = await user.getNotes(id);
-//         return res.status(200).json(notes);
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ error: 'An error occurred while fetching notes' });
-//     }
-// };
-
-export const getRandomQuotesController = async (req: Request, res: Response) => {
-    const id = (req as UserRequest).user?.id;
-
-    if (!id) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    try {
-        const quotes = await user.getRandomQuotes(id);
-        return res.status(200).json(quotes);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while fetching random quotes' });
-    }
-};

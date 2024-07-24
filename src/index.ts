@@ -11,8 +11,14 @@ import cors from 'cors';
 
 const corsOptions = {
   origin: [
-  
+    "http://103.127.137.138/",
+    "http://103.127.137.138:5173",
+    "http://103.127.137.138:5173/",
+    "http://103.127.137.138:4173",
+    "http://103.127.137.138:4173/",
+    "http://103.127.137.138",
     "http://localhost:5173",
+    "http://localhost:4173",
     "https://bw2nj1xt-5173.asse.devtunnels.ms",
   ],
   optionsSuccessStatus: 200,
